@@ -2,6 +2,7 @@ from collections import defaultdict
 from gensim.models import Word2Vec
 from gensim.models.phrases import Phraser, Phrases
 from gensim.utils import multiprocessing, os
+from annoy import AnnoyIndex
 
 
 def train():
@@ -20,11 +21,6 @@ def train():
     bigram = Phraser(phrases)
     sentences = bigram[sent]
 
-    word_freq = defaultdict(int)
-    for sent in sentences:
-        for i in sent:
-            word_freq[i] += 1
-
     # Train the Word2Vec model on our case study text.
     cores = multiprocessing.cpu_count()
     w2v_model = Word2Vec(
@@ -40,6 +36,17 @@ def train():
     w2v_model.train(
         sentences, total_examples=w2v_model.corpus_count, epochs=30, report_delay=1)
     w2v_model.save("./models/vocabulary")
+
+    # Build an annoy index with hamming distance between each word vector.
+    length = w2v_model.wv.vector_size
+    aidx = AnnoyIndex(length, "hamming")
+    i = 0
+    for wv in w2v_model.wv.vectors:
+        aidx.add_item(i, wv)
+        i += 1
+
+    aidx.build(10)
+    aidx.save("./models/neighbours")
 
 
 if __name__ == "__main__":
