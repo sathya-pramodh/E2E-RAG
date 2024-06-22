@@ -1,5 +1,6 @@
 from gensim.models import Word2Vec
 from gensim.models.phrases import Phraser, Phrases
+from gensim.models.word2vec import threading
 from gensim.utils import multiprocessing, os
 from word_vectors import FileType, convert
 
@@ -19,10 +20,21 @@ def store_w2v():
 
     # Read and store all vocabularies
     files = os.listdir(base_dir)
+    threads = []
     for file in files:
         if file.endswith(".vec"):
-            store_file(os.path.join(base_dir, file),
-                       os.path.join(save_dir, f"vocab-{file.replace('.vec', '.w2v')}"))
+            thread = (
+                threading
+                .Thread(target=lambda:
+                        store_file(os.path.join(base_dir, file),
+                                   os.path.join(save_dir, f"vocab-{file.replace('.vec', '.w2v')}"))
+                        )
+            )
+            thread.start()
+            threads.append(thread)
+
+    for thread in threads:
+        thread.join()
 
 
 def train_w2v():
