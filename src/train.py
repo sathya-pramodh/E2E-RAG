@@ -1,11 +1,31 @@
-from collections import defaultdict
 from gensim.models import Word2Vec
 from gensim.models.phrases import Phraser, Phrases
 from gensim.utils import multiprocessing, os
-from annoy import AnnoyIndex
+from word_vectors import FileType, convert
 
 
-def train():
+def store_file(read_path, store_path):
+    convert(
+        read_path,
+        output=store_path,
+        output_file_type=FileType.W2V,
+        input_file_type=FileType.FASTTEXT
+    )
+
+
+def store_w2v():
+    base_dir = "models"
+    save_dir = "models"
+
+    # Read and store all vocabularies
+    files = os.listdir(base_dir)
+    for file in files:
+        if file.endswith(".vec"):
+            store_file(os.path.join(base_dir, file),
+                       os.path.join(save_dir, f"vocab-{file.replace('.vec', '.w2v')}"))
+
+
+def train_w2v():
     base_dir = "data"
     files = os.listdir(path=base_dir)
     all_lines = []
@@ -37,17 +57,6 @@ def train():
         sentences, total_examples=w2v_model.corpus_count, epochs=30, report_delay=1)
     w2v_model.save("./models/vocabulary")
 
-    # Build an annoy index with hamming distance between each word vector.
-    length = w2v_model.wv.vector_size
-    aidx = AnnoyIndex(length, "hamming")
-    i = 0
-    for wv in w2v_model.wv.vectors:
-        aidx.add_item(i, wv)
-        i += 1
-
-    aidx.build(10)
-    aidx.save("./models/neighbours")
-
 
 if __name__ == "__main__":
-    train()
+    store_w2v()

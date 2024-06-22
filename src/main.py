@@ -1,25 +1,43 @@
-from gensim.models import Word2Vec
-from annoy import AnnoyIndex
+import os
+from gensim.models import KeyedVectors
+from gensim.similarities.annoy import AnnoyIndexer
+import threading
+
+
+def load_model_and_predict(file, load_dir, query_word, num_neighbours):
+    print(f"Loading {file}...")
+    w2v_model = KeyedVectors.load_word2vec_format(
+        os.path.join(load_dir, file), binary=True)
+    annoy_indexer = AnnoyIndexer(w2v_model, 100)
+    print(f"Most similar (approx) {num_neighbours} neighbours to '{
+          query_word}' according to model '{file}' are: ")
+    for pred in w2v_model.most_similar(
+            positive=[query_word], topn=num_neighbours, indexer=annoy_indexer):
+        print(pred)
+    print(f"Most similar (exact) {num_neighbours} neighbours to '{
+          query_word}' according to model '{file}' are: ")
+    for pred in w2v_model.most_similar(
+            positive=[query_word], topn=num_neighbours):
+        print(pred)
 
 
 def main():
-    query_word = "SQL"
-    num_neighbours = 10
+    load_dir = "models"
+    query_word = "Athena"
+    num_neighbours = 1
 
-    w2v_model = Word2Vec.load("./models/vocabulary")
-    print(f"Most similar to '{query_word}' are: ")
-    print(w2v_model.wv.most_similar(positive=[query_word]))
-    aidx = AnnoyIndex(w2v_model.wv.vector_size,
-                      "hamming")
-    aidx.load("./models/neighbours")
-    idx = w2v_model.wv.get_index(query_word)
-    neigbours = aidx.get_nns_by_item(int(idx), num_neighbours)
-    matched_keys = []
-    for neighbour in neigbours:
-        matched_keys.append(w2v_model.wv.index_to_key[neighbour])
-    print()
-    print(f"{num_neighbours} neighbours for '{query_word}' are:")
-    print(matched_keys)
+    # Load w2v models saved.
+    files = os.listdir(load_dir)
+    threads = []
+    for file in files:
+        if file.startswith("vocab-"):
+            thread = threading.Thread(target=lambda: load_model_and_predict(
+                file, load_dir, query_word, num_neighbours))
+            thread.start()
+            threads.append(thread)
+
+    for thread in threads:
+        thread.join()
 
 
 if __name__ == "__main__":
