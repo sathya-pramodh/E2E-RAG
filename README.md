@@ -7,14 +7,9 @@ Install Dependencies
 make deps
 ```
 Setup
-- Make a directory called `models` at the root.
-- Download any fasttext models from [here](https://fasttext.cc/docs/en/english-vectors.html).
-- Extract the zips so that all the `.vec` files are in the `models` directory.
+- Use `src/E2E-RAG.ipynb` to train/convert all fasttext models and convert them to a readable format.
+- After downloading the `.bin` and `.bin.vectors` files from the colab notebook, move them to `src/models` (should be created) and you should be completely setup. (The flask API only uses one of those models and loads them onto RAM when running it).
 
-Train
-```bash
-make train
-```
 Run
 ```bash
 make run
