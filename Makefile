@@ -1,4 +1,4 @@
-DEPS=flask gensim python-dotenv waitress
+DEPS=flask python-dotenv waitress psycopg2-binary
 FLASK_APP=main
 HOST="0.0.0.0"
 PORT=5000
@@ -11,6 +11,7 @@ test:
 
 dev-run:
 	cd src && env FLASK_APP=$(FLASK_APP) flask --debug run --host=$(HOST)
+
 deploy:
 	cd src && python3 main.py
 
