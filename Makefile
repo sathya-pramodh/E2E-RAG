@@ -9,6 +9,9 @@ deps:
 test:
 	cd scripts && sh test_handshake.sh
 
+db:
+	cd src/db && python3 insert.py
+
 dev-run:
 	cd src && env FLASK_APP=$(FLASK_APP) flask --debug run --host=$(HOST)
 
